@@ -1,13 +1,21 @@
-function renderBooks(filter) {
+let books;
+
+async function renderBooks(filter) {
   const booksWrapper = document.querySelector('.books');
   
-  const books = getBooks();
+  booksWrapper.body.classList += ' books__loading'
+
+  if (!books){
+   books = await getBooks();
+  }
+
+  booksWrapper.body.classList.remove(' books__loading')
 
   if(filter === 'LOW_TO_HIGH') {
-   books.sort((a, b) => (a.originalPrice) - (b.originalPrice));
+   books.sort((a, b) => (a.salePrice || a.originalPrice) - (b.salePrice || b.originalPrice));
   }
   else if (filter === 'HIGH_TO_LOW') {
-    books.sort((a, b) => (b.originalPrice) - (a.originalPrice));
+    books.sort((a, b) => (b.salePrice || b.originalPrice) - (a.salePrice || a.originalPrice));
   }
   else if (filter === 'RATING') {
     books.sort ((a, b) => (b.rating) - (a.rating));
@@ -23,7 +31,7 @@ function renderBooks(filter) {
      ${ratingsHTML(book.rating)}
     </div>
     <div class="book__price">
-      <span>$${book.originalPrice.toFixed(2)}</span>
+     ${priceHTML(book.originalPrice, book.salePrice)} 
     </div>
   </div>`
   })
@@ -32,10 +40,19 @@ function renderBooks(filter) {
   booksWrapper.innerHTML = booksHtml;
 }
 
+function priceHTML(originalPrice, salePrice) {
+  if (!salePrice){
+   return `$${originalPrice.toFixed(2)}`
+  }
+  else {
+   return `<span class="book__price--normal">$${originalPrice.toFixed(2)}</span>$${salePrice.toFixed(2)}`
+  }
+}
+
+
 
 function filterBooks(event) {
-  renderBooks(event.target.value);
-
+ renderBooks(event.target.value);
 }
 
 
@@ -46,8 +63,8 @@ for (let i = 0; i < Math.floor(rating); ++i) {
   }
 
 if (!Number.isInteger (rating)) {
-    ratingHTML += ' <i class="fa-solid fa-star-half-alt"></i>\n';
-  }
+ ratingHTML += ' <i class="fa-solid fa-star-half-alt"></i>\n';
+}
  return ratingHTML;
 }
 
@@ -61,7 +78,9 @@ setTimeout(() => {
 });
 // FAKE DATA
 function getBooks() {
-  return [
+  return new Promise((resolve) => {
+    setTimeout(() => {
+     resolve([
         {
           id: 1,
           title: "Crack the Coding Interview",
@@ -149,6 +168,8 @@ function getBooks() {
           originalPrice: 30,
           salePrice: null,
           rating: 4.5,
-        }
-      ]
-    }
+        },
+      ]);
+    }, 1000);
+  });
+}
